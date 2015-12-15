@@ -2,7 +2,7 @@ project(graphix_editor)
 include(FindPkgConfig)
 find_package(PkgConfig REQUIRED)
 
-pkg_check_modules(GRAPHIX REQUIRED graphix)
+pkg_check_modules(GRAPHIX REQUIRED "graphix >= 0.0.1")
 
 add_definitions(
     "-std=gnu++11"
@@ -18,6 +18,10 @@ add_definitions(
 
 add_executable(graphix_editor
     src/graphix_editor.cpp
+)
+
+set_target_properties(graphix_editor
+    PROPERTIES OUTPUT_NAME graphix-editor
 )
 
 target_include_directories(graphix_editor

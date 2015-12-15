@@ -1,7 +1,8 @@
 #include <iostream>
+#include <gfx/graphix.h>
 
 int main(){
-    std::cout << "Graphix Editor" << std::endl;
+    auto window = gfx::window::create("Graphix Editor");
 
     return 0;
 }
