@@ -1,5 +1,4 @@
 #include <gfx/graphix.h>
-#include <iostream>
 
 int main(){
     auto window = gfx::window::create("Graphix Editor");
