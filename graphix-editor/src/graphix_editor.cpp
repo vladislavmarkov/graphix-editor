@@ -1,17 +1,22 @@
 #include <gfx/graphix.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
+#include <iostream>
 
 int main(){
     auto window = gfx::window::create("Graphix Editor");
 
     auto camera = gfx::camera::create(
-        glm::vec3(0.0f, 0.0f,-3.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(3.0f, 3.0f, 3.0f),
+        glm::normalize(-glm::vec3(3.0f, 3.0f, 3.0f)),
         glm::vec3(0.0f, 1.0f, 0.0f)
     );
 
-    auto scene = gfx::scene::create(
+    auto scene = gfx::scene::load(
         90.0f, window->get_width(), window->get_height(),
-        0.1f, 100.0f, camera.get(), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f)
+        0.1f, 100.0f, camera.get(), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
+        "/path/to/cube.obj"
     );
 
     window->add(scene.get());
@@ -24,6 +29,10 @@ int main(){
             wnd.close();
         }
     });
+
+    window->set_resize_reaction(
+        [](gfx::window&, int, int){}
+    );
 
     return gfx::run(*window);
 }
