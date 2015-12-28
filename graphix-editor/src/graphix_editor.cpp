@@ -8,15 +8,15 @@ int main(){
     auto window = gfx::window::create("Graphix Editor");
 
     auto camera = gfx::camera::create(
-        glm::vec3(3.0f, 3.0f, 3.0f),
-        glm::normalize(-glm::vec3(3.0f, 3.0f, 3.0f)),
-        glm::vec3(0.0f, 1.0f, 0.0f)
+        glm::vec3(6.0f, -2.0f, 4.0f),
+        glm::normalize(-glm::vec3(6.0f, -2.0f, 4.0f)),
+        glm::vec3(0.0f, 0.0f, 1.0f)
     );
 
     auto scene = gfx::scene::load(
         90.0f, window->get_width(), window->get_height(),
-        0.1f, 100.0f, camera.get(), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
-        "/path/to/cube.obj"
+        0.1f, 100.0f, camera.get(), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+        "/path/to/model.blend"
     );
 
     window->add(scene.get());
