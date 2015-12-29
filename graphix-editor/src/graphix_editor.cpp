@@ -19,14 +19,60 @@ int main(){
         "/path/to/model.blend"
     );
 
-    window->add(scene.get());
+    window->add(scene);
+
+    static const float step = 0.2f;
 
     window->set_key_reaction(
-        [](gfx::window &wnd, gfx::key::code key, gfx::key::state state){
+        [&camera, &scene](gfx::window &wnd, gfx::key::code key, gfx::key::state state){
         if (key == gfx::key::code::escape &&
             state == gfx::key::state::release
         ){
             wnd.close();
+        }
+
+        if (key == gfx::key::code::charkey_w ||
+            key == gfx::key::code::charkey_a ||
+            key == gfx::key::code::charkey_s ||
+            key == gfx::key::code::charkey_d
+        ){
+            if (state == gfx::key::state::press ||
+                state == gfx::key::state::repeat
+            ){
+                wnd.hide_mouse_cursor();
+                if (key == gfx::key::code::charkey_w){
+                    camera->set_position(
+                        camera->get_position() +
+                            glm::mat3(step) * camera->get_direction()
+                    );
+                }else if (key == gfx::key::code::charkey_a){
+                    camera->set_position(
+                        camera->get_position() +
+                            glm::mat3(step) * glm::normalize(
+                                glm::cross(
+                                    camera->get_up_vector(), camera->get_direction()
+                                )
+                            )
+                    );
+                }else if (key == gfx::key::code::charkey_s){
+                    camera->set_position(
+                        camera->get_position() +
+                            glm::mat3(step) * -camera->get_direction()
+                    );
+                }else if (key == gfx::key::code::charkey_d){
+                    camera->set_position(
+                        camera->get_position() +
+                            glm::mat3(step) * glm::normalize(
+                                -glm::cross(
+                                    camera->get_up_vector(), camera->get_direction()
+                                )
+                            )
+                    );
+                }
+                scene->draw();
+            }else{
+                wnd.show_mouse_cursor();
+            }
         }
     });
 
