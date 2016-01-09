@@ -18,6 +18,7 @@ add_definitions(
 
 add_executable(graphix_editor
     src/graphix_editor.cpp
+    src/wasd_motion.h
 )
 
 set_target_properties(graphix_editor
