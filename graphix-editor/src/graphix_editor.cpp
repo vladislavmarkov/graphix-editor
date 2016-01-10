@@ -46,40 +46,21 @@ int main(){
 
         static std::chrono::duration<float> delta_time; delta_time =
             std::chrono::duration_cast<std::chrono::duration<float>>(
-                prev - current
+                current - prev
             );
 
         prev = current;
 
-        static bool was_in_motion = false;
-        static bool was_immobile = true;
-
-        if (wasd.is_in_motion()){
-            if (was_immobile){
-                was_in_motion = true;
-                was_immobile = !was_in_motion;
-                delta_time = std::chrono::duration<float>::zero();
-                return;
-            }
-
-            camera->set_matrix(
-                camera->get_matrix() *
-                (glm::translate(
-                    wasd.get_direction() * delta_time.count() * speed)
-                )
-            );
-
-            if (camera->was_moved()){
-                scene->request_redraw();
-            }
-        }else{
-            if (was_in_motion){
-                was_immobile = true;
-                was_in_motion = !was_immobile;
-                delta_time = std::chrono::duration<float>::zero();
-                return;
-            }
+        if (delta_time.count() > 0.05f){
+            delta_time = std::chrono::duration<float>::zero();
         }
+
+        camera->set_matrix(
+            camera->get_matrix() *
+            (glm::translate(wasd.get_direction() * delta_time.count() * speed))
+        );
+
+        scene->request_redraw();
     });
 
     // axis X, Y and Z

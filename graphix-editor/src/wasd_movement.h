@@ -52,63 +52,39 @@ public:
     }
 
     void enable_forward(){
-        if (!fwd_){
-            fwd_ = true;
-            modified_ = true;
-        }
+        if (!fwd_){ fwd_ = true; modified_ = true; }
         disable_back();
     }
 
     void disable_forward(){
-        if (fwd_){
-            fwd_ = false;
-            modified_ = true;
-        }
+        if (fwd_){ fwd_ = false; modified_ = true; }
     }
 
     void enable_back(){
-        if (!back_){
-            back_ = true;
-            modified_ = true;
-        }
+        if (!back_){ back_ = true; modified_ = true; }
         disable_forward();
     }
 
     void disable_back(){
-        if (back_){
-            back_ = false;
-            modified_ = true;
-        }
+        if (back_){ back_ = false; modified_ = true; }
     }
 
     void enable_left(){
-        if (!left_){
-            left_ = true;
-            modified_ = true;
-        }
+        if (!left_){ left_ = true; modified_ = true; }
         disable_right();
     }
 
     void disable_left(){
-        if (left_){
-            left_ = false;
-            modified_ = true;
-        }
+        if (left_){ left_ = false; modified_ = true; }
     }
 
     void enable_right(){
-        if (!right_){
-            right_ = true;
-            modified_ = true;
-        }
+        if (!right_){ right_ = true; modified_ = true; }
         disable_left();
     }
 
     void disable_right(){
-        if (right_){
-            right_ = false;
-            modified_ = true;
-        }
+        if (right_){ right_ = false; modified_ = true; }
     }
 };
 
