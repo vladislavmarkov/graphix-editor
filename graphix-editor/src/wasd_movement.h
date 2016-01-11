@@ -10,7 +10,9 @@ namespace gfxe{
 
 class wasd_movement{
     std::weak_ptr<gfx::camera> camera_;
-    mutable glm::vec3 direction_; // cache
+
+    // cache
+    mutable glm::vec3 direction_;
 
     bool fwd_{false};
     bool back_{false};
@@ -25,17 +27,10 @@ class wasd_movement{
         auto shared_camera = camera_.lock();
         if (!shared_camera){ return; }
 
-        if (fwd_ && !back_){
-            direction_ += shared_camera->get_forward();
-        }else if (back_ && !fwd_){
-            direction_ += shared_camera->get_backward();
-        }
-
-        if (left_ && !right_){
-            direction_ += shared_camera->get_left();
-        }else if (right_ && !left_){
-            direction_ += shared_camera->get_right();
-        }
+        if (fwd_){ direction_ += shared_camera->get_forward(); }
+        if (back_){ direction_ += shared_camera->get_backward(); }
+        if (left_){ direction_ += shared_camera->get_left(); }
+        if (right_){ direction_ += shared_camera->get_right(); }
 
         direction_ = glm::normalize(direction_);
     }
@@ -44,6 +39,8 @@ public:
     wasd_movement(std::shared_ptr<gfx::camera> camera): camera_(camera){}
 
     bool is_in_motion() const{ return fwd_|| back_ || left_ || right_; }
+
+    void set_modified(){ modified_ = true; }
 
     glm::vec3 get_direction() const{
         recalc_direction();
