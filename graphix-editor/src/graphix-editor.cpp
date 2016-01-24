@@ -16,7 +16,7 @@
 #include <memory>
 #include <vector>
 
-#include "wasd_movement.hpp"
+#include "wasd-movement.hpp"
 
 using std::vector;
 

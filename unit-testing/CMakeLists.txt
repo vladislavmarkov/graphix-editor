@@ -16,7 +16,7 @@ add_definitions(
 )
 
 add_executable(unit_testing
-    src/unit_testing.cpp
+    src/unit-testing.cpp
 )
 
 target_include_directories(unit_testing
