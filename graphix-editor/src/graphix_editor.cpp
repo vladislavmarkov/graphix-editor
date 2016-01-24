@@ -33,7 +33,7 @@ int main(){
     // load scene from file
     auto scene = gfx::scene::load(
         90.0f, window->get_width(), window->get_height(),
-        0.1f, 100.0f, camera.get(), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+        0.1f, 100.0f, camera, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
         "/home/vlad/Downloads/audi_r8.blend"
     );
 
@@ -209,7 +209,7 @@ int main(){
 
     window->set_mouse_move_reaction(
         [&wasd, &scene](gfx::window &wnd, double x, double y){
-            gfx::camera *camera = scene->get_camera();
+            auto camera = scene->get_camera();
             if (!camera ||
                 wasd.is_in_motion() ||
                 gfx::key::state::press != wnd.get_key(gfx::key::code::charkey_x)
