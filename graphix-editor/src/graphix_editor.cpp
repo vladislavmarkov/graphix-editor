@@ -1,6 +1,10 @@
 #include <chrono>
-#include <gfx/graphix.h>
-#include <gfx/matrix-helpers.h>
+#include <gfx/graphix.hpp>
+#include <gfx/matrix-helpers.hpp>
+#include <gfx/node.hpp>
+#include <gfx/scene.hpp>
+#include <gfx/vertex-array.hpp>
+#include <gfx/window.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -12,7 +16,7 @@
 #include <memory>
 #include <vector>
 
-#include "wasd_movement.h"
+#include "wasd_movement.hpp"
 
 using std::vector;
 

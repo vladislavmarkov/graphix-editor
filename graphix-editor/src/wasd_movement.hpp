@@ -2,7 +2,7 @@
 #ifndef __GRAPHIX_WASD_MOVEMENT_H__
 #define __GRAPHIX_WASD_MOVEMENT_H__
 
-#include <gfx/camera.h>
+#include <gfx/camera.hpp>
 #include <glm/glm.hpp>
 #include <memory>
 
