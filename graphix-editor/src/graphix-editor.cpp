@@ -7,127 +7,39 @@
 #include <gfx/window.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/dual_quaternion.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
-#include <iomanip>
 #include <iostream>
 #include <memory>
+#include <tuple>
 #include <vector>
 
-#include "wasd-movement.hpp"
+#include "wasd.hpp"
 
+using std::make_tuple;
+using std::shared_ptr;
+using std::string;
+using std::tie;
+using std::tuple;
 using std::vector;
 
-int main(){
-    auto window = gfx::window::create("Graphix Editor");
-
-    // create camera
-    glm::vec3
-        cam_pos = glm::vec3(3.0f, 4.0f, 5.0f),
-        cam_dir = glm::normalize(-glm::vec3(3.0f, 4.0f, 5.0f)),
-        cam_right = glm::normalize(
-            glm::cross(cam_dir, glm::vec3(0.0f, 0.0f, 1.0f))
-        ),
-        cam_up = glm::normalize(glm::cross(cam_right, cam_dir));
-
-    auto camera = gfx::camera::create(glm::lookAt(cam_pos, cam_dir, cam_up));
-
-    // load scene from file
-    auto scene = gfx::scene::load(
-        90.0f, window->get_width(), window->get_height(),
-        0.1f, 100.0f, camera, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
-        "/home/vlad/Downloads/audi_r8.blend"
+shared_ptr<gfx::scene> init_scene(
+    const gfx::window &wnd,
+    const std::string &source_filename
+){
+    return gfx::scene::load(
+        90.0f, wnd.get_width(), wnd.get_height(),
+        0.1f, 100.0f,
+        shared_ptr<gfx::camera>(),
+        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+        source_filename
     );
+}
 
-    gfxe::wasd_movement wasd(camera);
-    auto wasd_movement = gfx::movement::create();
-    wasd_movement->set_move_callback([&window, &wasd, &scene, &camera](){
-        static const float speed = 1.0f;
-        static const float mouse_speed = 0.005f;
-
-        static auto prev = std::chrono::high_resolution_clock::now();
-
-        static std::chrono::high_resolution_clock::time_point current; current =
-            std::chrono::high_resolution_clock::now();
-
-        static std::chrono::duration<float> delta_time; delta_time =
-            std::chrono::duration_cast<std::chrono::duration<float>>(
-                current - prev
-            );
-
-        prev = current;
-
-        if (delta_time.count() > 0.05f){
-            delta_time = std::chrono::duration<float>::zero();
-        }
-
-        static double prev_x = 0, prev_y = 0;
-        static double x, y;
-        static bool prev_init = [&window](double &_x_, double &_y_)->bool{
-            window->get_cursor_pos(_x_, _y_);
-            return true;
-        }(prev_x, prev_y);
-        (void)prev_init;
-
-        window->get_cursor_pos(x, y);
-
-        static float horizontal_angle = 0; horizontal_angle =
-            mouse_speed * delta_time.count() *
-            float(prev_x - x);
-
-        static float vertical_angle = 0; vertical_angle =
-            mouse_speed * delta_time.count() *
-            float(prev_y - y);
-
-        prev_x = x;
-        prev_y = y;
-
-        glm::mat4 tmp =
-            camera->get_matrix() *
-            glm::inverse(glm::translate(camera->get_position()));
-
-        glm::quat qrh(
-            glm::angleAxis(
-                glm::degrees(-horizontal_angle),
-                glm::vec3(glm::normalize(
-                    tmp * glm::vec4(glm::vec3(0.0f, 0.0f, 1.0f), 0.0f)
-                ))
-            )
-        );
-
-        glm::normalize(qrh);
-
-        tmp = glm::mat4_cast(qrh) * tmp;
-
-        glm::quat qrv(
-            glm::angleAxis(
-                glm::degrees(-vertical_angle),
-                glm::vec3(1.0f, 0.0f, 0.0f)
-            )
-        );
-
-        glm::normalize(qrv);
-
-        tmp = glm::mat4_cast(qrv) * tmp;
-        tmp = tmp * glm::translate(camera->get_position());
-
-        camera->set_matrix(tmp);
-
-        wasd.set_modified();
-
-        camera->set_matrix(
-            camera->get_matrix() *
-            (glm::translate(wasd.get_direction() * delta_time.count() * speed))
-        );
-
-        scene->request_redraw();
-    });
-
-    // axis X, Y and Z
-    auto axisXYZ = gfx::vertex_array::create(
-        "axisXYZ", // name
+tuple<shared_ptr<gfx::drawable>, shared_ptr<gfx::node>> init_xyz(){
+    auto xyz = gfx::vertex_array::create(
+        "xyz", // name
         vector<glm::vec3>{ // vertices
             glm::vec3(0.0f, 0.0f, 0.0f),   // zero coordinate
             glm::vec3(100.0f, 0.0f, 0.0f), // X-axis
@@ -138,155 +50,26 @@ int main(){
         gfx::primitive_type::line // how to draw
     );
 
-    auto axis_node = std::shared_ptr<gfx::node>(
-        new gfx::node(nullptr, "axis_node")
+    auto xyz_node = std::shared_ptr<gfx::node>(
+        new gfx::node(nullptr, "xyz_node")
     );
 
-    scene->add(axis_node, axisXYZ);
-    scene->add(wasd_movement);
+    return make_tuple(xyz, xyz_node);
+}
 
-    window->add(scene);
+int main(int argc, char **argv){
+    if (argc < 2){
+        throw std::invalid_argument("scene file expected");
+    }
 
-    window->set_key_reaction(
-        [&wasd, &wasd_movement](
-            gfx::window &wnd,
-            gfx::key::code key,
-            gfx::key::state state
-        ){
-            if (key == gfx::key::code::escape &&
-                state == gfx::key::state::release
-            ){
-                wnd.close();
-            }
+    auto wnd = gfx::window::create("Graphix Editor");
+    auto scn = init_scene(*wnd, argv[1]);
+    gfxe::wasd wasd(wnd, scn);
+    shared_ptr<gfx::drawable> xyz;
+    shared_ptr<gfx::node> xyz_node;
+    tie(xyz, xyz_node) = init_xyz();
+    scn->add(xyz_node, xyz);
+    wnd->add(scn);
 
-            bool wasd_keys = false;
-
-            if (key == gfx::key::code::charkey_w){
-                wasd_keys = true;
-                if (state == gfx::key::state::press){
-                    wasd.enable_forward();
-                }else if (state == gfx::key::state::release){
-                    wasd.disable_forward();
-                }
-            }else if (key == gfx::key::code::charkey_a){
-                wasd_keys = true;
-                if (state == gfx::key::state::press){
-                    wasd.enable_left();
-                }else if (state == gfx::key::state::release){
-                    wasd.disable_left();
-                }
-            }else if (key == gfx::key::code::charkey_s){
-                wasd_keys = true;
-                if (state == gfx::key::state::press){
-                    wasd.enable_back();
-                }else if (state == gfx::key::state::release){
-                    wasd.disable_back();
-                }
-            }else if (key == gfx::key::code::charkey_d){
-                wasd_keys = true;
-                if (state == gfx::key::state::press){
-                    wasd.enable_right();
-                }else if (state == gfx::key::state::release){
-                    wasd.disable_right();
-                }
-            }
-
-            if (key == gfx::key::code::charkey_x){
-                if (state == gfx::key::state::press){
-                    wnd.disable_mouse_cursor();
-                }else if (state == gfx::key::state::release){
-                    wnd.enable_mouse_cursor();
-                }
-            }
-
-            if (wasd_keys){
-                if (wasd.is_in_motion()){
-                    wnd.disable_mouse_cursor();
-                    wasd_movement->start();
-                }else{
-                    wnd.enable_mouse_cursor();
-                    wasd_movement->stop();
-                }
-            }
-        }
-    );
-
-    window->set_mouse_move_reaction(
-        [&wasd, &scene](gfx::window &wnd, double x, double y){
-            auto camera = scene->get_camera();
-            if (!camera ||
-                wasd.is_in_motion() ||
-                gfx::key::state::press != wnd.get_key(gfx::key::code::charkey_x)
-            ) return;
-
-            static const float mouse_speed = 0.02f;
-
-            static auto prev = std::chrono::high_resolution_clock::now();
-
-            static std::chrono::high_resolution_clock::time_point current;
-            current = std::chrono::high_resolution_clock::now();
-
-            static std::chrono::duration<float> delta_time; delta_time =
-                std::chrono::duration_cast<std::chrono::duration<float>>(
-                    current - prev
-                );
-
-            prev = current;
-
-            if (delta_time.count() > 0.05f){
-                delta_time = std::chrono::duration<float>::zero();
-            }
-
-            static double prev_x = x, prev_y = y;
-
-            static float horizontal_angle = 0; horizontal_angle =
-                mouse_speed * delta_time.count() *
-                float(prev_x - x);
-
-            static float vertical_angle = 0; vertical_angle =
-                mouse_speed * delta_time.count() *
-                float(prev_y - y);
-
-            prev_x = x;
-            prev_y = y;
-
-            glm::mat4 tmp =
-                camera->get_matrix() *
-                glm::inverse(glm::translate(camera->get_position()));
-
-            glm::quat qrh(
-                glm::angleAxis(
-                    glm::degrees(-horizontal_angle),
-                    glm::vec3(glm::normalize(
-                        tmp * glm::vec4(glm::vec3(0.0f, 0.0f, 1.0f), 0.0f)
-                    ))
-                )
-            );
-
-            glm::normalize(qrh);
-
-            tmp = glm::mat4_cast(qrh) * tmp;
-
-            glm::quat qrv(
-                glm::angleAxis(
-                    glm::degrees(-vertical_angle),
-                    glm::vec3(1.0f, 0.0f, 0.0f)
-                )
-            );
-
-            glm::normalize(qrv);
-
-            tmp = glm::mat4_cast(qrv) * tmp;
-            tmp = tmp * glm::translate(camera->get_position());
-
-            camera->set_matrix(tmp);
-
-            wasd.set_modified();
-            (void)wasd.get_direction();
-
-            scene->request_redraw();
-        }
-    );
-
-    return gfx::run(*window);
+    return gfx::run(*wnd);
 }
