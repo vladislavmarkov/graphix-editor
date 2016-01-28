@@ -36,10 +36,6 @@ void wasd::stopwatch::reset(){
     );
 }
 
-void wasd::rotate_camera(){
-    // TODO
-}
-
 void wasd::recalc_direction() const{
     if (!modified_) return;
 
@@ -195,13 +191,14 @@ void wasd::on_move(){
 
     cam_->set_matrix(tmp);
 
-    modified_ = true;
-
-    cam_->set_matrix(
-        cam_->get_matrix() * (
-            glm::translate(get_direction() * delta * motion_speed_)
-        )
-    );
+    if (left_ || right_ || fwd_ || back_){
+        modified_ = true;
+        cam_->set_matrix(
+            cam_->get_matrix() * (
+                glm::translate(get_direction() * delta * motion_speed_)
+            )
+        );
+    }
 
     auto scn = scn_.lock(); if (!scn){
         throw runtime_error("scene is null");
