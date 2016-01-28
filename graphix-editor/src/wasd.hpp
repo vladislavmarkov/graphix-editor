@@ -50,7 +50,6 @@ class wasd{
     bool rotation_{false};
     mutable bool modified_{true};
 
-    void rotate_camera();
     void recalc_direction() const;
     std::shared_ptr<gfx::camera> init_camera() const;
 
