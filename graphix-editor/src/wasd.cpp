@@ -212,13 +212,12 @@ void wasd::on_key(gfx::key::code key, gfx::key::state state){
         throw runtime_error("window is expired");
     }
 
-    if (key == gfx::key::code::escape && state == gfx::key::state::release){
-        wnd->close();
-    }
+    if (state == gfx::key::state::repeat) return;
 
     bool motion = false;
-
     switch (key){
+    case gfx::key::code::escape:
+        if (state == gfx::key::state::release){ wnd->close(); } return;
     case gfx::key::code::charkey_w: motion = true;
         if (state == gfx::key::state::press) enable_forward(); else
         if (state == gfx::key::state::release) disable_forward(); break;
