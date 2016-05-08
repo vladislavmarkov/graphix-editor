@@ -6,6 +6,8 @@
 #include <gfx/window.hpp>
 #include <glm/glm.hpp>
 #include <memory>
+#include <stdexcept>
+#include <tuple>
 
 namespace gfx{
 
@@ -25,29 +27,64 @@ class wasd{
     std::function<void(gfx::window&, gfx::key::code, gfx::key::state)>
         key_func_;
 
-    class stopwatch{
-        std::chrono::high_resolution_clock::time_point prev_{
-            std::chrono::high_resolution_clock::time_point(
-                std::chrono::high_resolution_clock::duration::zero()
-            )
-        };
+    const float motion_speed_{1.0f};
+
+    class mouse_coords{
+        const float rotation_speed_{0.005f};
+
+        double prev_x_{0}, prev_y_{0};
+        std::weak_ptr<gfx::window> wnd_;
+
+        class stopwatch{
+            std::chrono::high_resolution_clock::time_point prev_{
+                std::chrono::high_resolution_clock::time_point(
+                    std::chrono::high_resolution_clock::duration::zero()
+                )
+            };
+
+        public:
+            float delta();
+            void reset();
+        } sw_;
 
     public:
-        float delta();
-        void reset();
-    } wasd_sw_;
+        mouse_coords(std::shared_ptr<gfx::window> wnd): wnd_(wnd){}
 
-    const float motion_speed_{1.0f};
-    const float rotation_speed_{0.005f};
+        std::tuple<float, float> delta_coords(){
+            auto wnd = wnd_.lock(); if (!wnd){
+                throw std::runtime_error("window is expired");
+            }
+
+            double x, y; wnd->get_cursor_pos(x, y);
+            float
+                delta_x = static_cast<float>(prev_x_ - x),
+                delta_y = static_cast<float>(prev_y_ - y);
+
+            prev_x_ = x; prev_y_ = y;
+            return std::make_tuple(delta_x, delta_y);
+        }
+
+        std::tuple<float, float, float> delta_angles(){
+            float delta_x, delta_y, delta_t = sw_.delta();
+            std::tie(delta_x, delta_y) = delta_coords();
+            float delta_distance = delta_t * rotation_speed_;
+            return std::make_tuple(
+                delta_distance * delta_x,
+                delta_distance * delta_y,
+                delta_t
+            );
+        }
+
+        void reset_watch(){ sw_.reset(); }
+    } mouse_coords_;
 
     // cache
     mutable glm::vec3 direction_;
 
-    bool fwd_{false};
-    bool back_{false};
-    bool left_{false};
-    bool right_{false};
-    bool rotation_{false};
+    bool
+        fwd_{false}, back_{false}, left_{false}, right_{false},
+        rotation_{false};
+
     mutable bool modified_{true};
 
     void recalc_direction() const;

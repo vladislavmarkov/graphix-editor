@@ -4,6 +4,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
 #include <stdexcept>
+#include <tuple>
 
 #include "wasd.hpp"
 
@@ -12,10 +13,11 @@ using std::invalid_argument;
 using std::runtime_error;
 using std::shared_ptr;
 using std::string;
+using std::tie;
 
 namespace gfxe{
 
-float wasd::stopwatch::delta(){
+float wasd::mouse_coords::stopwatch::delta(){
     if (prev_ == high_resolution_clock::time_point(
             high_resolution_clock::duration::zero()
         )
@@ -30,7 +32,7 @@ float wasd::stopwatch::delta(){
     return result.count();
 }
 
-void wasd::stopwatch::reset(){
+void wasd::mouse_coords::stopwatch::reset(){
     prev_ = high_resolution_clock::time_point(
         high_resolution_clock::duration::zero()
     );
@@ -68,7 +70,8 @@ wasd::wasd(
     wnd_(wnd),
     cam_(init_camera()),
     scn_(scn),
-    mv_(gfx::movement::create())
+    mv_(gfx::movement::create()),
+    mouse_coords_(wnd)
 {
     scn->add(mv_);
     scn->set_camera(cam_);
@@ -131,34 +134,12 @@ void wasd::toggle_look(){
 }
 
 void wasd::on_move(){
-    static double prev_x = 0, prev_y = 0;
-    static double x, y;
-    static bool prev_init = [this](double &_x_, double &_y_)->bool{
-        auto wnd = wnd_.lock(); if (!wnd){
-            throw invalid_argument("window is expired");
-        }
-
-        wnd->get_cursor_pos(_x_, _y_);
-        return true;
-    }(prev_x, prev_y);
-    (void)prev_init;
-
     auto wnd = wnd_.lock(); if (!wnd){
         throw runtime_error("window is expired");
     }
 
-    wnd->get_cursor_pos(x, y);
-
-    float delta = wasd_sw_.delta();
-
-    static float horizontal_angle = 0; horizontal_angle =
-        rotation_speed_ * delta * static_cast<float>(prev_x - x);
-
-    static float vertical_angle = 0; vertical_angle =
-        rotation_speed_ * delta * static_cast<float>(prev_y - y);
-
-    prev_x = x;
-    prev_y = y;
+    float angle_x, angle_y, delta_t;
+    tie(angle_x, angle_y, delta_t) = mouse_coords_.delta_angles();
 
     glm::mat4 tmp =
         cam_->get_matrix() *
@@ -166,7 +147,7 @@ void wasd::on_move(){
 
     glm::quat qrh(
         glm::angleAxis(
-            glm::degrees(-horizontal_angle),
+            glm::degrees(-angle_x),
             glm::vec3(glm::normalize(
                 tmp * glm::vec4(glm::vec3(0.0f, 0.0f, 1.0f), 0.0f)
             ))
@@ -178,10 +159,7 @@ void wasd::on_move(){
     tmp = glm::mat4_cast(qrh) * tmp;
 
     glm::quat qrv(
-        glm::angleAxis(
-            glm::degrees(-vertical_angle),
-            glm::vec3(1.0f, 0.0f, 0.0f)
-        )
+        glm::angleAxis(glm::degrees(-angle_y), glm::vec3(1.0f, 0.0f, 0.0f))
     );
 
     glm::normalize(qrv);
@@ -195,7 +173,7 @@ void wasd::on_move(){
         modified_ = true;
         cam_->set_matrix(
             cam_->get_matrix() * (
-                glm::translate(get_direction() * delta * motion_speed_)
+                glm::translate(get_direction() * delta_t * motion_speed_)
             )
         );
     }
@@ -236,7 +214,9 @@ void wasd::on_key(gfx::key::code key, gfx::key::state state){
     }
 
     if (is_in_motion()){
-        wnd->disable_mouse_cursor(); if (motion) mv_->start(); wasd_sw_.reset();
+        wnd->disable_mouse_cursor();
+        if (motion) mv_->start();
+        mouse_coords_.reset_watch();
     }else{
         wnd->enable_mouse_cursor(); if (motion) mv_->stop();
     }
